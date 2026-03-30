@@ -1,5 +1,5 @@
 resource "aws_iam_user" "toposhare_user" {
-  name = var.iam_user
+  name = "${var.iam_user}-${random_integer.suffix.result}"
 }
 
 resource "aws_iam_access_key" "toposhare_user" {
@@ -7,7 +7,7 @@ resource "aws_iam_access_key" "toposhare_user" {
 }
 
 resource "aws_iam_group" "toposhare_access_group" {
-  name = var.iam_group
+  name = "${var.iam_group}-${random_integer.suffix.result}"
 }
 
 resource "aws_iam_user_group_membership" "toposhare_access_group" {
@@ -43,7 +43,7 @@ data "aws_iam_policy_document" "toposhare_minimum_user_permissions" {
 }
 
 resource "aws_iam_group_policy" "toposhare_minimum_user_permissions" {
-  name   = var.iam_group_permission_policy_name
+  name   = "${var.iam_group_permission_policy_name}-${random_integer.suffix.result}"
   group  = aws_iam_group.toposhare_access_group.name
   policy = data.aws_iam_policy_document.toposhare_minimum_user_permissions.json
 }
@@ -88,7 +88,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "toposhare_bucket_config" {
   count  = var.use_default_storage_tier ? 0 : 1
   bucket = aws_s3_bucket.toposhare_bucket.bucket
   rule {
-    id     = var.bucket_lifecycle_policy_name
+    id     = "${var.bucket_lifecycle_policy_name}-${random_integer.suffix.result}"
     status = "Enabled"
     transition {
       days          = 0

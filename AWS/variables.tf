@@ -21,7 +21,7 @@ variable "aws_region_code" {
 variable "bucket_name" {
   type        = string
   description = "AWS bucket name for new bucket"
-  default     = "my-toposhare-repository-12569778"
+  default     = "my-toposhare-repo"
 }
 variable "use_default_storage_tier" {
   type        = bool
