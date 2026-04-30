@@ -18,6 +18,16 @@ resource "azurerm_storage_account" "storage" {
 
   # Enabling shared access keys (Default is true, but good to be explicit)
   shared_access_key_enabled = true
+
+  blob_properties {
+    cors_rule {
+	    allowed_headers = ["*"]
+      allowed_methods = ["GET"]
+      allowed_origins = ["https://new.certainty3d.com"]
+      exposed_headers = ["*"]
+      max_age_in_seconds = 3600
+    }
+  }
 }
 
 # Helper to ensure the storage name is unique
