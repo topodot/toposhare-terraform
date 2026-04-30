@@ -21,7 +21,7 @@ resource "azurerm_storage_account" "storage" {
 
   blob_properties {
     cors_rule {
-	    allowed_headers = ["*"]
+      allowed_headers = ["*"]
       allowed_methods = ["GET"]
       allowed_origins = ["https://new.certainty3d.com"]
       exposed_headers = ["*"]
