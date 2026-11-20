@@ -93,7 +93,8 @@ Use the same directory and Azure account/subscription as when you first applied.
 1. **Update changes**  
 	If the Terraform configuration or variables change:
 	```
-	terraform plan terraform apply
+	terraform plan
+	terraform apply
 	```
 2. **Destroy all resources (use with care)**  
 	To tear down all resources managed by this Terraform configuration:
