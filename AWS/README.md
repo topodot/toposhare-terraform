@@ -131,18 +131,27 @@ Use the same Terraform state, working directory, AWS account, and region as the 
 
 * * *
 ## Troubleshooting
-* `terraform` or `aws` not found
-	* Ensure both tools are installed and added to your `PATH`.
-	* Open a new terminal after installation so the PATH changes take effect.
-* **Authentication or permission errors**
-	* Re‑run:
-		```
-		aws sts get-caller-identity
-		```
-	* Confirm you’re logged in to the correct AWS account and have required permissions for the resources being created.
-* **Provider or plugin download issues during** `terraform init`
-	* Check your network connection and proxy settings.
-	* Re‑run:
-		```
-		terraform init -upgrade
-		```
+
+### `terraform` or `aws` is not found
+
+Confirm both tools are installed and on your `PATH`. Open a new terminal after installation.
+
+### `No configuration files`
+
+Run Terraform from the `AWS/` directory and check that it contains `main.tf`.
+
+### Terraform proposes recreating existing resources or outputs are missing
+
+Stop before applying. Check that you're in the original deployment's working directory and cloud account, then run `terraform state list`. If the expected resources are missing from state, locate the original state or recover it from a backup. If you can't recover the state, [import the existing resources](https://developer.hashicorp.com/terraform/cli/import) into state and review the plan before applying.
+
+### Provider download fails during `terraform init`
+
+Check your network connection and proxy settings, then retry `terraform init`. Use `terraform init -upgrade` when you intend to select newer provider versions allowed by the configuration.
+
+### `ExpiredToken`, `InvalidClientTokenId`, or the wrong AWS account
+
+If you use temporary credentials, renew the session using the same sign-in method and profile you configured earlier. Run `aws configure list` to check where the credentials come from, then run `aws sts get-caller-identity` to verify the account and role. If you intend to use a named profile, check for old credential environment variables in the same terminal. They can override the profile's credentials. If the identity is correct but AWS returns `AccessDenied`, check that it has permission for the S3 or IAM action named in the error.
+
+### `BucketNotEmpty` during destroy
+
+Terraform may already have removed other resources before S3 rejected the bucket deletion. Back up any data you need and verify that the bucket is empty, including any existing object versions and delete markers. Run `terraform plan -destroy` to review what remains before retrying.
