@@ -23,46 +23,53 @@ This guide explains how to install prerequisites, configure AWS credentials, and
 * * *
 ## Configure AWS Credentials
 
-You must authenticate the AWS CLI before running Terraform so that Terraform can create and modify AWS resources on your behalf.
+Choose the sign-in method that matches your AWS account access. The identity you use for Terraform needs permission to provision the S3 and IAM resources in this configuration.
 
-1. **Login to AWS**
-	If your environment uses SSO and supports `aws login`, run:
-	```
-	aws login
-	```
-	Otherwise, configure credentials manually using:
-	```
-	aws configure
-	```
-  You will be prompted for:
-	* `AWS Access Key ID`
-	* `AWS Secret Access Key`
-	* `Default region name` (for example: `us-east-1`)
-	* `Default output format` (for example: `json`)
-2. **Verify credentials**
-	  Confirm that your AWS credentials are working by listing your caller identity:
-	```
-	aws sts get-caller-identity
-	```
-  You should see your AWS account and user/role information in the output.
-  
+- **IAM Identity Center (SSO)**. Run `aws configure sso --profile toposhare` the first time, then run `aws sso login --profile toposhare` to sign in.
+- **AWS Management Console credentials**. With AWS CLI v2.32.0 or later, run `aws login --profile toposhare` if your identity supports that sign-in method.
+- **Access keys**. If your organization provides access keys for provisioning, run `aws configure --profile toposhare`.
+
+Set the same profile for AWS CLI and Terraform commands in the terminal you use for deployment.
+
+PowerShell (Windows)
+
+```powershell
+$env:AWS_PROFILE = "toposhare"
+```
+
+Bash or Zsh (macOS/Linux)
+
+```bash
+export AWS_PROFILE="toposhare"
+```
+
+Run `aws sts get-caller-identity` and confirm the account and identity before running Terraform.
+
 ## Get the TopoShare AWS Terraform Files
 
-1. Clone or download the TopoShare Terraform files.
-2. Extract/unzip the archive (if applicable) to a local directory, for example:
-	* Windows: `C:\repos\toposhare-terraform`
-	* macOS/Linux: `~/repos/toposhare-terraform`
-3. Open a terminal / PowerShell session in that directory.
-	  Examples:
-* **PowerShell (Windows)**
-	```
-	cd C:\repos\toposhare-terraform
-	```
-* **bash (macOS/Linux)**
-	```
-	cd ~/repos/toposhare-terraform
-	```
-  
+Clone or download the repository. If you download an archive, extract it first. Open the `AWS` subdirectory, which contains `main.tf`. Adjust these example paths to match where you put the files.
+
+PowerShell (Windows)
+
+```powershell
+cd C:\repos\toposhare-terraform\AWS
+```
+
+Bash or Zsh (macOS/Linux)
+
+```bash
+cd ~/repos/toposhare-terraform/AWS
+```
+
+## Choose an AWS Region
+
+Terraform uses `aws_region_code`, which defaults to `us-east-1`, for the deployment. To select a different region, set it in `AWS/terraform.tfvars` before the first plan. If the file already exists, edit the setting there.
+
+```hcl
+aws_region_code = "us-west-2"
+```
+
+For an existing deployment, keep using its original region.
 
 * * *
 ## Initialize and Apply Terraform
@@ -91,16 +98,21 @@ You must authenticate the AWS CLI before running Terraform so that Terraform can
 	* Show you an execution plan.
 	* Prompt: `Do you want to perform these actions?`
 		* Type `yes` and press Enter to proceed.
-4. **Wait for completion**
-	When finished, Terraform will display:
-	* A summary of resources `added`, `changed`, or `destroyed`.
-	* Any defined **outputs** (for example, URLs, ARNs, or IDs of created resources).
-	Capture any important outputs for later use (e.g., endpoint URLs).
+
+## Retrieve the TopoShare Credentials
+
+After apply completes, run `terraform output` for the bucket name, region, and access key ID. Terraform hides the secret access key in the normal output. Retrieve it when you're ready to store it securely.
+
+```sh
+terraform output -raw secret_key
+```
+
+This command prints the secret in plain text. Store it in an approved secrets manager and keep it out of logs and Git. Keep the Terraform state and its backups in a secure location because they contain the secret too.
 
 * * *
 ## Updating or Destroying Infrastructure
 
-Use the same directory and AWS profile/credentials as when you first applied.
+Use the same Terraform state, working directory, AWS account, and region as the original deployment.
 
 1. **Update changes**
 	If the Terraform configuration or variables change:
@@ -109,7 +121,9 @@ Use the same directory and AWS profile/credentials as when you first applied.
 	terraform apply
 	```
 2. **Destroy all resources (use with care)**
-	To tear down all resources managed by this Terraform configuration:
+	Before running destroy, confirm that any S3 data you need is backed up and that the bucket is empty. With this configuration, a nonempty bucket prevents Terraform from deleting the bucket, and other resources may already have been removed when that error occurs.
+
+	To tear down the resources managed by this Terraform configuration:
 	```
 	terraform destroy
 	```

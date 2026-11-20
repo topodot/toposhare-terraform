@@ -22,40 +22,50 @@ This guide explains how to install prerequisites, configure Azure credentials, a
 	az version
 	```
 ## Configure Azure Credentials
-You must authenticate the Azure CLI before running Terraform so that Terraform can create and modify Azure resources on your behalf.
-1. **Login to Azure**
-	```
-	az login
-	```
 
-2. **Verify credentials**
-	Confirm that your Azure credentials are working and that the correct subscription is active:
-	```
-	az account show
-	```
-	You should see your Azure subscription and account information in the output.
+1. Sign in with `az login`.
+2. Run `az account show` and confirm the subscription. To switch, run `az account set --subscription "<subscription-id>"` and check it again.
+3. Set `ARM_SUBSCRIPTION_ID` to that subscription's ID in the terminal where you run Terraform. The AzureRM provider requires an explicit subscription ID.
 
-3. **Set Subscription ID as Environment Variable**  
-	  Copy the id of the subscription you wish to run these accounts under from the command above and set that as an environment variable:
-	```
-	$env:ARM_SUBSCRIPTION_ID="your-subscription-id-here"
-	```
+   PowerShell (Windows)
+
+   ```powershell
+   $env:ARM_SUBSCRIPTION_ID = "your-subscription-id-here"
+   ```
+
+   Bash or Zsh (macOS/Linux)
+
+   ```bash
+   export ARM_SUBSCRIPTION_ID="your-subscription-id-here"
+   ```
 
 ## Get the TopoShare Azure Terraform Files
-1. Clone or download the TopoShare Terraform files.
-2. Extract/unzip the archive (if applicable) to a local directory, for example:
-* Windows: `C:\repos\toposhare-terraform-azure`
-* macOS/Linux: `~/repos/toposhare-terraform-azure`
-3. Open a terminal / PowerShell session in that directory.
-Examples:
-**PowerShell (Windows)**
-	```powershell
-	cd C:\repos\toposhare-terraform-azure
-	```
-**bash (macOS/Linux)**
-	```bash
-	cd ~/repos/toposhare-terraform-azure
-	```
+
+Clone or download the repository. If you download an archive, extract it first. Open the `Azure` subdirectory, which contains `main.tf`. Adjust these example paths to match where you put the files.
+
+PowerShell (Windows)
+
+```powershell
+cd C:\repos\toposhare-terraform\Azure
+```
+
+Bash or Zsh (macOS/Linux)
+
+```bash
+cd ~/repos/toposhare-terraform/Azure
+```
+
+## Choose a Storage Account Name
+
+Terraform appends six digits to `bucket_name` to form the storage account name. The default prefix is `mytoposhare`. A custom prefix must contain 1 to 18 lowercase letters or digits. Azure requires the full name to be globally unique. If the generated name is taken on a first deployment, choose a different prefix.
+
+To override the default, set `bucket_name` in `Azure/terraform.tfvars` before the first plan.
+
+```hcl
+bucket_name = "yourtoposhare"
+```
+
+For an existing deployment, keep using the original prefix and Terraform state. Changing the prefix makes Terraform plan to replace the storage account.
 
 ## Initialize and Apply Terraform
 > **Important:** Ensure you are in the directory that contains the `main.tf` (and other `.tf`) files before running these commands.
@@ -82,14 +92,19 @@ Examples:
 	* Show you an execution plan.
 	* Prompt: `Do you want to perform these actions?`
 		* Type `yes` and press Enter to proceed.
-4. **Wait for completion**
-	When finished, Terraform will display:
-	* A summary of resources `added`, `changed`, or `destroyed`.
-	* Any defined **outputs** (for example, resource IDs, endpoint URLs, or connection strings of created resources).
-	Capture any important outputs for later use (e.g., endpoint URLs).
- 
+
+## Retrieve the TopoShare Connection String
+
+Terraform hides the storage account connection string in the normal apply output. After apply completes, retrieve it when you're ready to store it securely.
+
+```sh
+terraform output -raw primary_connection_string
+```
+
+This command prints the connection string in plain text. Store it in an approved secrets manager and keep it out of logs and Git. Keep the Terraform state and its backups in a secure location because they contain the connection string too.
+
 ## Updating or Destroying Infrastructure
-Use the same directory and Azure account/subscription as when you first applied.
+Use the same Terraform state, working directory, and Azure subscription as the original deployment.
 1. **Update changes**  
 	If the Terraform configuration or variables change:
 	```

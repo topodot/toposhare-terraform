@@ -1,0 +1,3 @@
+# Terraform state can contain cloud credentials.
+*.tfstate
+*.tfstate.*
